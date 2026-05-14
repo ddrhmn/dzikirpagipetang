@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dzikir Pagi & Petang</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --radius: 18px;
+  --pg-accent: #c07d00;
+  --pg-dark: #5c3a00;
+  --pg-card: rgba(255,255,255,0.78);
+  --pg-border: rgba(192,125,0,0.2);
+  --sj-accent: #f4a03a;
+  --sj-text: #ffe5c8;
+  --sj-card: rgba(255,120,30,0.10);
+  --sj-border: rgba(244,160,58,0.25);
+}
+html, body { height: 100%; }
+body {
+  font-family: 'Lora', Georgia, serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== BG PAGI ===== */
+body.pagi {
+  background: linear-gradient(160deg, #fffae8 0%, #fde8b0 55%, #f5c96a 100%);
+  color: var(--pg-dark);
+}
+body.pagi .sun-orb {
+  position: fixed; width: 350px; height: 350px;
+  top: -130px; right: -90px; border-radius: 50%;
+  background: radial-gradient(circle, #ffe066 0%, #ffd000 40%, transparent 72%);
+  pointer-events: none; z-index: 0;
+  animation: sunPulse 7s ease-in-out infinite alternate;
+}
+@keyframes sunPulse {
+  from { opacity:0.65; transform:scale(1); }
+  to   { opacity:1;   transform:scale(1.1); }
+}
+
+/* ===== BG PETANG / SENJA ===== */
+body.petang {
+  background: linear-gradient(175deg,
+    #0d0500 0%, #3d1200 18%, #8a2a00 38%,
+    #cc4e0a 55%, #e8801a 70%, #f5b04a 85%, #ffd08a 100%);
+  color: var(--sj-text);
+}
+body.petang .sun-orb {
+  position: fixed; width: 240px; height: 240px;
+  bottom: -50px; left: 50%; transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff5b0 0%, #ffcc00 30%, #ff8800 60%, transparent 80%);
+  pointer-events: none; z-index: 0;
+  animation: sunSet 8s ease-in-out infinite alternate;
+}
+@keyframes sunSet {
+  from { opacity:0.85; transform:translateX(-50%) scale(1); }
+  to   { opacity:1;    transform:translateX(-50%) scale(1.06); }
+}
+body.petang .clouds { display:block; }
+.clouds {
+  display:none; position:fixed; inset:0;
+  pointer-events:none; z-index:0; overflow:hidden;
+}
+.cloud {
+  position:absolute; border-radius:50%; opacity:0.16;
+  filter:blur(38px);
+  animation:cloudDrift linear infinite alternate;
+}
+@keyframes cloudDrift {
+  from { transform:translateX(-8px); }
+  to   { transform:translateX(8px); }
+}
+
+/* ===== PAGE SYSTEM ===== */
+.page {
+  position:fixed; inset:0;
+  display:flex; flex-direction:column;
+  overflow-y:auto;
+  opacity:0; pointer-events:none;
+  transition:opacity 0.4s ease;
+  z-index:1;
+}
+.page.active { opacity:1; pointer-events:all; }
+
+/* ===== MAIN PAGE ===== */
+#mainPage {
+  align-items:center; justify-content:center;
+  text-align:center; padding:32px 20px;
+}
+.main-inner {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column;
+  align-items:center; gap:26px;
+  width:100%; max-width:500px; margin:auto;
+}
+.main-icon {
+  font-size:5.5rem; line-height:1;
+  animation:floatIcon 3.5s ease-in-out infinite alternate;
+  filter:drop-shadow(0 8px 24px rgba(0,0,0,0.2));
+}
+@keyframes floatIcon {
+  from { transform:translateY(0); }
+  to   { transform:translateY(-12px); }
+}
+.main-title {
+  font-family:'Amiri',serif;
+  font-size:clamp(2.4rem,7vw,3.4rem);
+  font-weight:700; line-height:1.2;
+}
+body.pagi  .main-title { color:var(--pg-dark); }
+body.petang .main-title { color:var(--sj-text); text-shadow:0 2px 14px rgba(0,0,0,0.45); }
+
+.main-arabic {
+  font-family:'Amiri',serif;
+  font-size:clamp(1.5rem,4.5vw,2rem);
+  direction:rtl; line-height:1.9; opacity:0.72;
+}
+.main-desc {
+  font-size:1rem; line-height:1.7;
+  opacity:0.62; font-style:italic; max-width:340px;
+}
+
+/* mode cards */
+.mode-select {
+  display:flex; gap:14px; flex-wrap:wrap; justify-content:center;
+}
+.mode-card {
+  flex:1; min-width:145px; max-width:200px;
+  border:none; border-radius:var(--radius);
+  padding:22px 16px; cursor:pointer;
+  font-family:'Lora',serif; font-weight:600;
+  transition:transform 0.2s, box-shadow 0.2s;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+}
+.mode-card .mc-icon { font-size:2.2rem; }
+.mode-card .mc-label { font-size:1.1rem; }
+.mode-card .mc-sub { font-size:0.8rem; font-weight:400; opacity:0.68; }
+body.pagi  .mode-card { background:rgba(255,255,255,0.82); color:var(--pg-dark); box-shadow:0 4px 20px rgba(192,125,0,0.14); border:2px solid rgba(192,125,0,0.15); }
+body.petang .mode-card { background:rgba(255,255,255,0.09); color:var(--sj-text); box-shadow:0 4px 20px rgba(0,0,0,0.28); border:2px solid rgba(244,160,58,0.25); backdrop-filter:blur(10px); }
+.mode-card:hover { transform:translateY(-5px); }
+body.pagi  .mode-card:hover { box-shadow:0 10px 28px rgba(192,125,0,0.25); }
+body.petang .mode-card:hover { box-shadow:0 10px 28px rgba(244,160,58,0.22); }
+.mode-card:active { transform:scale(0.97); }
+body.pagi  .mode-card.selected { border-color:var(--pg-accent); box-shadow:0 0 0 3px rgba(192,125,0,0.25); }
+body.petang .mode-card.selected { border-color:var(--sj-accent); box-shadow:0 0 0 3px rgba(244,160,58,0.3); }
+
+/* start btn */
+.start-btn {
+  border:none; border-radius:50px;
+  padding:16px 56px;
+  font-family:'Lora',serif; font-size:1.15rem; font-weight:700;
+  cursor:pointer; letter-spacing:0.05em;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+body.pagi  .start-btn { background:var(--pg-accent); color:#fff; box-shadow:0 6px 24px rgba(192,125,0,0.4); }
+body.petang .start-btn { background:linear-gradient(135deg,#f09030,#e05800); color:#fff; box-shadow:0 6px 24px rgba(220,80,10,0.45); }
+.start-btn:hover { transform:translateY(-3px); }
+body.pagi  .start-btn:hover { box-shadow:0 12px 32px rgba(192,125,0,0.5); }
+body.petang .start-btn:hover { box-shadow:0 12px 32px rgba(220,80,10,0.55); }
+.start-btn:active { transform:scale(0.97); }
+
+/* ===== DZIKIR PAGE ===== */
+.container {
+  position:relative; z-index:1;
+  max-width:700px; margin:0 auto;
+  padding:28px 18px 90px; width:100%;
+}
+.header-wrap {
+  position:relative; display:flex;
+  align-items:center; justify-content:center;
+  margin-bottom:22px;
+}
+.back-btn {
+  position:absolute; left:0;
+  border:none; background:transparent;
+  cursor:pointer; padding:6px 10px;
+  border-radius:50px;
+  transition:background 0.2s;
+  font-family:'Lora',serif; font-size:0.92rem;
+  display:flex; align-items:center; gap:4px;
+}
+body.pagi  .back-btn { color:var(--pg-accent); }
+body.petang .back-btn { color:var(--sj-accent); }
+body.pagi  .back-btn:hover { background:rgba(192,125,0,0.1); }
+body.petang .back-btn:hover { background:rgba(244,160,58,0.1); }
+.app-title {
+  font-family:'Amiri',serif;
+  font-size:clamp(2rem,5.5vw,2.8rem);
+  font-weight:700;
+}
+body.pagi  .app-title { color:var(--pg-dark); }
+body.petang .app-title { color:var(--sj-text); text-shadow:0 2px 10px rgba(0,0,0,0.3); }
+
+/* tab bar */
+.tab-bar {
+  display:flex; gap:8px; border-radius:50px;
+  padding:5px; margin:0 auto 22px; max-width:280px;
+}
+body.pagi  .tab-bar { background:rgba(0,0,0,0.07); }
+body.petang .tab-bar { background:rgba(255,255,255,0.1); }
+.tab-btn {
+  flex:1; border:none; border-radius:50px;
+  padding:10px 10px;
+  font-family:'Lora',serif; font-size:0.9rem; font-weight:600;
+  cursor:pointer; background:transparent;
+  transition:background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+body.pagi  .tab-btn { color:var(--pg-accent); }
+body.petang .tab-btn { color:var(--sj-accent); }
+body.pagi  .tab-btn.active { background:var(--pg-accent); color:#fff; box-shadow:0 3px 12px rgba(192,125,0,0.4); }
+body.petang .tab-btn.active { background:linear-gradient(135deg,#e07020,#c04800); color:#fff; box-shadow:0 3px 12px rgba(220,80,10,0.4); }
+
+/* progress */
+.progress-wrap { margin-bottom:20px; }
+.progress-row {
+  display:flex; justify-content:space-between;
+  font-size:0.9rem; margin-bottom:8px; opacity:0.7;
+}
+.progress-bar-bg {
+  height:7px; border-radius:10px; overflow:hidden;
+}
+body.pagi  .progress-bar-bg { background:rgba(0,0,0,0.1); }
+body.petang .progress-bar-bg { background:rgba(255,255,255,0.12); }
+.progress-bar-fill {
+  height:100%; border-radius:10px;
+  transition:width 0.4s ease;
+}
+body.pagi  .progress-bar-fill { background:linear-gradient(90deg,#e0a020,var(--pg-accent)); }
+body.petang .progress-bar-fill { background:linear-gradient(90deg,#e07020,#f5b04a); }
+
+/* complete banner */
+.complete-banner {
+  display:none; text-align:center; padding:20px;
+  border-radius:var(--radius); margin-bottom:18px;
+  font-size:1rem;
+  animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.complete-banner.show { display:block; }
+@keyframes popIn {
+  from { opacity:0; transform:scale(0.85); }
+  to   { opacity:1; transform:scale(1); }
+}
+body.pagi  .complete-banner { background:linear-gradient(135deg,#ffe5a0,#ffc83a); color:var(--pg-dark); }
+body.petang .complete-banner { background:linear-gradient(135deg,rgba(200,80,10,0.5),rgba(240,140,20,0.4)); color:var(--sj-text); border:1px solid rgba(244,160,58,0.3); backdrop-filter:blur(10px); }
+.complete-banner .em { font-size:2rem; display:block; margin-bottom:6px; }
+
+/* dzikir list */
+.dzikir-list { display:flex; flex-direction:column; gap:14px; }
+
+/* card — NO opacity/bg transition so toggle is instant */
+.dzikir-card {
+  border-radius:var(--radius);
+  padding:22px 24px;
+  cursor:pointer; position:relative;
+  overflow:hidden; user-select:none;
+}
+body.pagi  .dzikir-card { background:var(--pg-card); border:1.5px solid var(--pg-border); box-shadow:0 2px 18px rgba(192,125,0,0.09); backdrop-filter:blur(10px); }
+body.petang .dzikir-card { background:rgba(10,4,0,0.62); border:1.5px solid rgba(200,100,20,0.35); box-shadow:0 2px 18px rgba(0,0,0,0.45); backdrop-filter:blur(12px); color:#fff3e0; }
+.dzikir-card.done { opacity:0.48; }
+
+.card-header {
+  display:flex; justify-content:space-between;
+  align-items:flex-start; gap:12px; margin-bottom:12px;
+}
+.card-label {
+  font-size:0.77rem; font-weight:700;
+  letter-spacing:0.08em; text-transform:uppercase;
+  padding:3px 11px; border-radius:20px;
+}
+body.pagi  .card-label { background:rgba(192,125,0,0.14); color:var(--pg-accent); }
+body.petang .card-label { background:rgba(244,160,58,0.18); color:var(--sj-accent); }
+
+/* check circle — semua hijau */
+.check-circle {
+  width:29px; height:29px; border-radius:50%;
+  border:2.5px solid #2e9e4f; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-weight:700; color:#fff;
+}
+.done .check-circle { background:#2e9e4f; border-color:#2e9e4f; }
+
+/* arabic */
+.arabic {
+  font-family:'Amiri',serif;
+  font-size:clamp(1.45rem,4.2vw,1.85rem);
+  line-height:2.15; text-align:right; direction:rtl;
+  margin-bottom:12px;
+}
+body.pagi  .arabic { color:var(--pg-dark); }
+body.petang .arabic { color:#fff5e0; }
+
+.latin {
+  font-size:0.95rem; font-style:italic;
+  line-height:1.78; margin-bottom:10px; opacity:0.75;
+}
+.terjemah {
+  font-size:0.95rem; line-height:1.72;
+  margin-bottom:10px; opacity:0.72;
+}
+.sumber {
+  font-size:0.78rem; opacity:0.52;
+  font-style:italic; margin-bottom:8px;
+}
+.ulangan {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:0.8rem; padding:4px 13px;
+  border-radius:20px; font-weight:600;
+}
+body.pagi  .ulangan { background:rgba(192,125,0,0.13); color:var(--pg-accent); }
+body.petang .ulangan { background:rgba(244,160,58,0.18); color:var(--sj-accent); }
+
+/* bottom bar */
+.bottom-bar {
+  position:fixed; bottom:0; left:0; right:0;
+  padding:16px; display:flex; justify-content:center; z-index:10;
+}
+body.pagi  .bottom-bar { background:linear-gradient(to top, #fde8b0 60%, transparent); }
+body.petang .bottom-bar { background:linear-gradient(to top, #1a0a00 60%, transparent); }
+
+.reset-btn {
+  border:none; border-radius:50px; padding:14px 44px;
+  font-family:'Lora',serif; font-size:0.98rem; font-weight:700;
+  cursor:pointer; letter-spacing:0.04em;
+  transition:transform 0.2s, box-shadow 0.2s;
+}
+body.pagi  .reset-btn { background:var(--pg-accent); color:#fff; box-shadow:0 5px 20px rgba(192,125,0,0.35); }
+body.petang .reset-btn { background:linear-gradient(135deg,#e07020,#c04800); color:#fff; box-shadow:0 5px 20px rgba(200,70,0,0.4); }
+.reset-btn:hover { transform:translateY(-2px); }
+.reset-btn:active { transform:scale(0.97); }
+
+/* entrance anim (initial render only) */
+.card-enter { animation:fadeUp 0.42s ease both; }
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+</style>
+</head>
+<body class="pagi">
+
+<div class="sun-orb"></div>
+<div class="clouds" id="clouds"></div>
+
+<!-- ==================== MAIN PAGE ==================== -->
+<div class="page active" id="mainPage">
+  <div class="main-inner">
+    <div class="main-icon" id="mainIcon">☀️</div>
+    <div class="main-title">Dzikir Pagi &amp; Petang</div>
+    <div class="main-arabic">أَذْكَارُ الصَّبَاحِ وَالْمَسَاءِ</div>
+    <div class="main-desc">Pilih waktu dzikir, lalu mulailah mengingat Allah dengan khusyu'.</div>
+
+    <div class="mode-select">
+      <button class="mode-card" id="mcPagi" onclick="selectMode('pagi')">
+        <span class="mc-icon">☀️</span>
+        <span class="mc-label">Pagi</span>
+        <span class="mc-sub">Setelah Subuh</span>
+      </button>
+      <button class="mode-card" id="mcPetang" onclick="selectMode('petang')">
+        <span class="mc-icon">🌅</span>
+        <span class="mc-label">Petang</span>
+        <span class="mc-sub">Setelah Ashar</span>
+      </button>
+    </div>
+
+    <button class="start-btn" onclick="startDzikir()">Mulai Dzikir →</button>
+  </div>
+</div>
+
+<!-- ==================== DZIKIR PAGE ==================== -->
+<div class="page" id="dzikirPage">
+  <div class="container">
+    <div class="header-wrap">
+      <button class="back-btn" onclick="goBack()">← Kembali</button>
+      <div class="app-title" id="appTitle">☀️ Dzikir Pagi</div>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tabPagi" onclick="switchTab('pagi')">☀️ Pagi</button>
+      <button class="tab-btn" id="tabPetang" onclick="switchTab('petang')">🌅 Petang</button>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-row">
+        <span id="progressText">0 dari 0 selesai</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="complete-banner" id="completeBanner">
+      <span class="em">🤲</span>
+      <strong>Alhamdulillah, Dzikir Selesai!</strong><br>
+      Semoga Allah menerima amalan kita.
+    </div>
+
+    <div class="dzikir-list" id="dzikirList"></div>
+  </div>
+
+  <div class="bottom-bar">
+    <button class="reset-btn" onclick="resetAll()">↺ Reset Ceklis</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATA
+   ========================================================= */
+const dzikirData = {
+  pagi: [
+    { arabic:"اللهُ لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلَا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ", latin:"Allāhu lā ilāha illā huwal-ḥayyul-qayyūm... (QS. Al-Baqarah: 255 – Ayat Kursi)", terjemah:"Allah, tidak ada ilah yang berhak disembah kecuali Dia Yang Hidup kekal lagi terus menerus mengurus makhluk-Nya. Tidak mengantuk dan tidak tidur...", sumber:"HR. Abu Dawud no. 5082 – Shahih. Barangsiapa membaca di pagi hari, dijaga dari gangguan jin hingga sore.", ulangan:1, kategori:"Ayat Kursi" },
+    { arabic:"قُلْ هُوَ اللهُ أَحَدٌ ۝ اللهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ", latin:"Qul huwallāhu aḥad, Allāhuṣ-ṣamad, lam yalid wa lam yūlad, wa lam yakun lahū kufuwan aḥad. (Al-Ikhlash)", terjemah:"Katakanlah: Dialah Allah Yang Maha Esa; Allah tempat bergantung; Dia tidak beranak dan tidak diperanakkan; dan tidak ada sesuatu yang setara dengan Dia.", sumber:"HR. Abu Dawud no. 5082, Tirmidzi no. 3575 – Shahih.", ulangan:3, kategori:"Al-Ikhlash" },
+    { arabic:"قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۝ مِن شَرِّ مَا خَلَقَ ۝ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ ۝ وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ ۝ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ", latin:"Qul a'ūdzu birabbil-falaq... (Al-Falaq)", terjemah:"Katakanlah: Aku berlindung kepada Tuhan yang menguasai subuh, dari kejahatan makhluk-Nya, dari kejahatan malam bila gelap gulita, dari tukang sihir, dan dari kejahatan orang yang dengki.", sumber:"HR. Abu Dawud no. 5082 – Shahih.", ulangan:3, kategori:"Al-Falaq" },
+    { arabic:"قُلْ أَعُوذُ بِرَبِّ النَّاسِ ۝ مَلِكِ النَّاسِ ۝ إِلَهِ النَّاسِ ۝ مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ ۝ الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ ۝ مِنَ الْجِنَّةِ وَالنَّاسِ", latin:"Qul a'ūdzu birabbin-nās... (An-Nas)", terjemah:"Katakanlah: Aku berlindung kepada Tuhannya manusia, Raja manusia, dari kejahatan bisikan syaitan yang bersembunyi, yang membisikkan kejahatan ke dalam dada manusia, dari golongan jin dan manusia.", sumber:"HR. Abu Dawud no. 5082 – Shahih.", ulangan:3, kategori:"An-Nas" },
+    { arabic:"أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ للهِ، وَالْحَمْدُ للهِ، لَا إِلَهَ إِلَّا اللهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ. رَبِّ أَسْأَلُكَ خَيْرَ مَا فِي هَذَا الْيَوْمِ وَخَيْرَ مَا بَعْدَهُ، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِي هَذَا الْيَوْمِ وَشَرِّ مَا بَعْدَهُ", latin:"Aṣbaḥnā wa aṣbaḥal-mulku lillāh... Rabbi as'aluka khayra mā fī hādhal-yawm...", terjemah:"Kami berpagi hari dan seluruh kerajaan hanya milik Allah... Ya Rabb, aku memohon kebaikan hari ini dan kebaikan sesudahnya, dan berlindung dari keburukannya.", sumber:"HR. Muslim no. 2723 – Shahih.", ulangan:1, kategori:"Dzikir Pagi" },
+    { arabic:"اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ", latin:"Allāhumma bika aṣbaḥnā, wa bika amsaynā, wa bika naḥyā, wa bika namūtu, wa ilaikan-nusyūr.", terjemah:"Ya Allah, dengan-Mu kami memasuki waktu pagi, dengan-Mu waktu petang, dengan-Mu kami hidup, dengan-Mu kami mati, dan kepada-Mu kebangkitan.", sumber:"HR. Tirmidzi no. 3391 – Hasan Shahih.", ulangan:1, kategori:"Dzikir Pagi" },
+    { arabic:"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ", latin:"Allāhumma anta rabbī lā ilāha illā anta, khalaqtanī wa ana 'abduk...", terjemah:"Ya Allah, Engkau Rabbku. Tidak ada ilah selain Engkau. Engkau menciptakanku dan aku adalah hamba-Mu... Ampunilah aku, sesungguhnya tidak ada yang mengampuni dosa selain Engkau.", sumber:"HR. Bukhari no. 6306 – Shahih. (Sayyidul Istighfar — penghulu istighfar)", ulangan:1, kategori:"Sayyidul Istighfar" },
+    { arabic:"اللَّهُمَّ إِنِّي أَصْبَحْتُ أُشْهِدُكَ، وَأُشْهِدُ حَمَلَةَ عَرْشِكَ، وَمَلَائِكَتَكَ، وَجَمِيعَ خَلْقِكَ، أَنَّكَ أَنْتَ اللهُ لَا إِلَهَ إِلَّا أَنْتَ وَحْدَكَ لَا شَرِيكَ لَكَ، وَأَنَّ مُحَمَّدًا عَبْدُكَ وَرَسُولُكَ", latin:"Allāhumma innī aṣbaḥtu usyhiduka wa usyhidu ḥamalata 'arsyika...", terjemah:"Ya Allah, aku di pagi ini mempersaksikan Engkau, para malaikat pemikul Arsy, dan seluruh makhluk bahwa Engkaulah Allah, tidak ada ilah selain Engkau, dan Muhammad adalah hamba dan utusan-Mu.", sumber:"HR. Abu Dawud no. 5069 – Shahih. Dibaca 4x; dibebaskan dari api neraka.", ulangan:4, kategori:"Persaksian" },
+    { arabic:"اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لَا إِلَهَ إِلَّا أَنْتَ", latin:"Allāhumma 'āfinī fī badanī, Allāhumma 'āfinī fī sam'ī, Allāhumma 'āfinī fī baṣarī, lā ilāha illā anta.", terjemah:"Ya Allah, berikanlah aku kesehatan pada badanku. Ya Allah, berikanlah aku kesehatan pada pendengaranku. Ya Allah, berikanlah aku kesehatan pada penglihatanku. Tidak ada ilah selain Engkau.", sumber:"HR. Abu Dawud no. 5090 – Hasan Shahih.", ulangan:3, kategori:"Doa Kesehatan" },
+    { arabic:"حَسْبِيَ اللهُ لَا إِلَهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ", latin:"Ḥasbiyallāhu lā ilāha illā huwa 'alayhi tawakkaltu wa huwa rabbul-'arsyil-'aẓīm.", terjemah:"Cukuplah Allah bagiku. Tidak ada ilah selain Dia. Hanya kepada-Nya aku bertawakal, dan Dia adalah Rabb 'Arsy yang Maha Agung.", sumber:"HR. Abu Dawud no. 5081 – Shahih. Dibaca 7x; Allah mencukupi urusannya di dunia dan akhirat.", ulangan:7, kategori:"Tawakal" },
+    { arabic:"اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ، وَالْفَقْرِ، وَأَعُوذُ بِكَ مِنْ عَذَابِ الْقَبْرِ، لَا إِلَهَ إِلَّا أَنْتَ", latin:"Allāhumma innī a'ūdzu bika minal-kufri wal-faqri, wa a'ūdzu bika min 'adzābil-qabri, lā ilāha illā anta.", terjemah:"Ya Allah, aku berlindung kepada-Mu dari kekufuran dan kefakiran, serta dari siksa kubur. Tidak ada ilah selain Engkau.", sumber:"HR. Abu Dawud no. 5090 – Hasan Shahih.", ulangan:3, kategori:"Perlindungan" },
+    { arabic:"سُبْحَانَ اللهِ وَبِحَمْدِهِ", latin:"Subḥānallāhi wa biḥamdih.", terjemah:"Maha Suci Allah dan segala puji bagi-Nya.", sumber:"HR. Muslim no. 2692 – Shahih. Barangsiapa membaca 100x pagi dan petang, tidak ada yang menandinginya kecuali yang membaca lebih banyak.", ulangan:100, kategori:"Tasbih" },
+    { arabic:"لَا إِلَهَ إِلَّا اللهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ", latin:"Lā ilāha illallāhu waḥdahū lā syarīka lah, lahul-mulku wa lahul-ḥamdu wa huwa 'alā kulli syay'in qadīr.", terjemah:"Tidak ada ilah selain Allah semata, tiada sekutu bagi-Nya. Bagi-Nya kerajaan dan segala pujian. Dia Mahakuasa atas segala sesuatu.", sumber:"HR. Bukhari no. 6404, Muslim no. 2693 – Shahih. Dibaca 10x; setara memerdekakan 4 budak.", ulangan:10, kategori:"Tauhid" },
+    { arabic:"اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ", latin:"Allāhumma ṣalli wa sallim 'alā nabiyyinā Muḥammad.", terjemah:"Ya Allah, curahkanlah shalawat dan salam kepada Nabi kami Muhammad ﷺ.", sumber:"HR. Abu Dawud no. 5077 – Shahih. Dibaca 10x; mendapat syafaat Nabi ﷺ.", ulangan:10, kategori:"Shalawat" }
+  ],
+  petang: [
+    { arabic:"اللهُ لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ مَن ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ وَلَا يُحِيطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ إِلَّا بِمَا شَاءَ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ وَلَا يَئُودُهُ حِفْظُهُمَا وَهُوَ الْعَلِيُّ الْعَظِيمُ", latin:"Allāhu lā ilāha illā huwal-ḥayyul-qayyūm... (QS. Al-Baqarah: 255 – Ayat Kursi)", terjemah:"Allah, tidak ada ilah yang berhak disembah kecuali Dia Yang Hidup kekal lagi terus menerus mengurus makhluk-Nya...", sumber:"HR. Abu Dawud no. 5082 – Shahih. Barangsiapa membaca di petang hari, dijaga dari gangguan jin hingga pagi.", ulangan:1, kategori:"Ayat Kursi" },
+    { arabic:"قُلْ هُوَ اللهُ أَحَدٌ ۝ اللهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ", latin:"Qul huwallāhu aḥad... (Al-Ikhlash, Al-Falaq, An-Nas — masing-masing 3x)", terjemah:"Al-Ikhlash, Al-Falaq, dan An-Nas dibaca masing-masing 3x sebagai perisai dari segala kejahatan.", sumber:"HR. Abu Dawud no. 5082, Tirmidzi no. 3575 – Shahih.", ulangan:3, kategori:"Al-Qur'an" },
+    { arabic:"أَمْسَيْنَا وَأَمْسَى الْمُلْكُ للهِ، وَالْحَمْدُ للهِ، لَا إِلَهَ إِلَّا اللهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ. رَبِّ أَسْأَلُكَ خَيْرَ مَا فِي هَذِهِ اللَّيْلَةِ وَخَيْرَ مَا بَعْدَهَا، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِي هَذِهِ اللَّيْلَةِ وَشَرِّ مَا بَعْدَهَا", latin:"Amsaynā wa amsal-mulku lillāh... Rabbi as'aluka khayra mā fī hādzihil-laylah...", terjemah:"Kami berpetang dan seluruh kerajaan hanya milik Allah... Ya Rabb, aku memohon kebaikan malam ini dan sesudahnya, dan berlindung dari keburukannya.", sumber:"HR. Muslim no. 2723 – Shahih.", ulangan:1, kategori:"Dzikir Petang" },
+    { arabic:"اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ الْمَصِيرُ", latin:"Allāhumma bika amsaynā, wa bika aṣbaḥnā, wa bika naḥyā, wa bika namūtu, wa ilaykal-maṣīr.", terjemah:"Ya Allah, dengan-Mu kami memasuki waktu petang, dengan-Mu waktu pagi, dengan-Mu kami hidup, dengan-Mu kami mati, dan kepada-Mu tempat kembali.", sumber:"HR. Tirmidzi no. 3391 – Hasan Shahih.", ulangan:1, kategori:"Dzikir Petang" },
+    { arabic:"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوءُ بِذَنْبِي فَاغْفِرْ لِي فَإِنَّهُ لَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ", latin:"Allāhumma anta rabbī lā ilāha illā anta, khalaqtanī wa ana 'abduk...", terjemah:"Ya Allah, Engkau Rabbku... Ampunilah aku, sesungguhnya tidak ada yang mengampuni dosa selain Engkau.", sumber:"HR. Bukhari no. 6306 – Shahih. (Sayyidul Istighfar)", ulangan:1, kategori:"Sayyidul Istighfar" },
+    { arabic:"اللَّهُمَّ إِنِّي أَمْسَيْتُ أُشْهِدُكَ، وَأُشْهِدُ حَمَلَةَ عَرْشِكَ، وَمَلَائِكَتَكَ، وَجَمِيعَ خَلْقِكَ، أَنَّكَ أَنْتَ اللهُ لَا إِلَهَ إِلَّا أَنْتَ وَحْدَكَ لَا شَرِيكَ لَكَ، وَأَنَّ مُحَمَّدًا عَبْدُكَ وَرَسُولُكَ", latin:"Allāhumma innī amsaytu usyhiduka wa usyhidu ḥamalata 'arsyika...", terjemah:"Ya Allah, aku di petang ini mempersaksikan Engkau dan seluruh makhluk-Mu bahwa Engkaulah Allah, tidak ada ilah selain Engkau, dan Muhammad adalah hamba dan utusan-Mu.", sumber:"HR. Abu Dawud no. 5069 – Shahih. Dibaca 4x; dibebaskan dari api neraka.", ulangan:4, kategori:"Persaksian" },
+    { arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ", latin:"Allāhumma innī as'alukal-'afwa wal-'āfiyata fid-dunyā wal-ākhirah.", terjemah:"Ya Allah, sesungguhnya aku memohon kepada-Mu maaf dan kesehatan (afiyah) di dunia dan akhirat.", sumber:"HR. Abu Dawud no. 5074, Ibnu Majah no. 3871 – Shahih.", ulangan:1, kategori:"Permohonan" },
+    { arabic:"اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لَا إِلَهَ إِلَّا أَنْتَ", latin:"Allāhumma 'āfinī fī badanī, Allāhumma 'āfinī fī sam'ī, Allāhumma 'āfinī fī baṣarī, lā ilāha illā anta.", terjemah:"Ya Allah, berikanlah aku kesehatan pada badan, pendengaran, dan penglihatanku. Tidak ada ilah selain Engkau.", sumber:"HR. Abu Dawud no. 5090 – Hasan Shahih.", ulangan:3, kategori:"Doa Kesehatan" },
+    { arabic:"اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ، وَالْجُبْنِ وَالْبُخْلِ، وَضَلَعِ الدَّيْنِ وَغَلَبَةِ الرِّجَالِ", latin:"Allāhumma innī a'ūdzu bika minal-hammi wal-ḥazani wal-'ajzi wal-kasali wal-jubni wal-bukhli wa ḍala'id-dayni wa ghalabatir-rijāl.", terjemah:"Ya Allah, aku berlindung kepada-Mu dari kesedihan, kelemahan, kemalasan, ketakutan, kekikiran, lilitan utang, dan penguasaan orang lain.", sumber:"HR. Bukhari no. 6363 – Shahih.", ulangan:1, kategori:"Perlindungan" },
+    { arabic:"بِسْمِ اللهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ", latin:"Bismillāhil-ladzī lā yaḍurru ma'asmihi syay'un fil-arḍi wa lā fis-samā'i wa huwas-samī'ul-'alīm.", terjemah:"Dengan nama Allah yang bersama nama-Nya tidak ada sesuatu pun yang membahayakan di bumi maupun di langit, dan Dia Maha Mendengar lagi Maha Mengetahui.", sumber:"HR. Abu Dawud no. 5088, Tirmidzi no. 3388 – Shahih. Dibaca 3x; tidak ada yang membahayakannya.", ulangan:3, kategori:"Perlindungan" },
+    { arabic:"سُبْحَانَ اللهِ وَبِحَمْدِهِ", latin:"Subḥānallāhi wa biḥamdih.", terjemah:"Maha Suci Allah dan segala puji bagi-Nya.", sumber:"HR. Muslim no. 2692 – Shahih. Dihapus kesalahannya meski sebanyak buih di lautan.", ulangan:100, kategori:"Tasbih" },
+    { arabic:"لَا إِلَهَ إِلَّا اللهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ", latin:"Lā ilāha illallāhu waḥdahū lā syarīka lah, lahul-mulku wa lahul-ḥamdu wa huwa 'alā kulli syay'in qadīr.", terjemah:"Tidak ada ilah selain Allah semata, tiada sekutu bagi-Nya. Bagi-Nya kerajaan dan segala pujian. Dia Mahakuasa atas segala sesuatu.", sumber:"HR. Bukhari no. 6404, Muslim no. 2693 – Shahih. Dibaca 10x; setara memerdekakan 4 budak.", ulangan:10, kategori:"Tauhid" },
+    { arabic:"اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ", latin:"Allāhumma ṣalli wa sallim 'alā nabiyyinā Muḥammad.", terjemah:"Ya Allah, curahkanlah shalawat dan salam kepada Nabi kami Muhammad ﷺ.", sumber:"HR. Abu Dawud no. 5077 – Shahih. Dibaca 10x; mendapat syafaat Nabi ﷺ.", ulangan:10, kategori:"Shalawat" }
+  ]
+};
+
+/* =========================================================
+   STATE
+   ========================================================= */
+let currentMode = 'pagi';
+let selectedMode = 'pagi';
+let checked = { pagi:{}, petang:{} };
+
+function loadState() {
+  try { const s=localStorage.getItem('dzikir_v2'); if(s) checked=JSON.parse(s); } catch(e){}
+}
+function saveState() {
+  try { localStorage.setItem('dzikir_v2', JSON.stringify(checked)); } catch(e){}
+}
+
+/* =========================================================
+   MAIN PAGE
+   ========================================================= */
+function selectMode(m) {
+  selectedMode = m;
+  applyTheme(m);
+  document.getElementById('mcPagi').classList.toggle('selected', m==='pagi');
+  document.getElementById('mcPetang').classList.toggle('selected', m==='petang');
+  document.getElementById('mainIcon').textContent = m==='pagi' ? '☀️' : '🌅';
+}
+
+function startDzikir() {
+  switchTab(selectedMode);
+  showPage('dzikirPage');
+}
+
+function goBack() { showPage('mainPage'); }
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* =========================================================
+   THEME
+   ========================================================= */
+function applyTheme(mode) {
+  document.body.className = mode;
+}
+
+/* =========================================================
+   TAB SWITCH
+   ========================================================= */
+function switchTab(mode) {
+  currentMode = mode;
+  applyTheme(mode);
+  document.getElementById('appTitle').textContent = mode==='pagi' ? '☀️ Dzikir Pagi' : '🌅 Dzikir Petang';
+  document.getElementById('tabPagi').classList.toggle('active', mode==='pagi');
+  document.getElementById('tabPetang').classList.toggle('active', mode==='petang');
+  renderAll();
+}
+
+/* =========================================================
+   RENDER ALL (tab switch / reset only)
+   ========================================================= */
+function renderAll() {
+  const list = document.getElementById('dzikirList');
+  list.innerHTML = '';
+  dzikirData[currentMode].forEach((d,i) => {
+    const done = !!checked[currentMode][i];
+    const card = document.createElement('div');
+    card.id = 'card-'+i;
+    card.className = 'dzikir-card card-enter' + (done?' done':'');
+    card.style.animationDelay = (i*0.038)+'s';
+    card.onclick = ()=>toggleCard(i);
+    card.innerHTML = cardHTML(d, done);
+    list.appendChild(card);
+  });
+  updateProgress();
+}
+
+function cardHTML(d, done) {
+  return `
+    <div class="card-header">
+      <span class="card-label">${d.kategori}</span>
+      <div class="check-circle">${done?'✓':''}</div>
+    </div>
+    <div class="arabic">${d.arabic.replace(/\n/g,'<br>')}</div>
+    <div class="latin">${d.latin}</div>
+    <div class="terjemah">${d.terjemah}</div>
+    <div class="sumber">📚 ${d.sumber}</div>
+    <div class="ulangan">🔁 ${d.ulangan}×</div>`;
+}
+
+/* =========================================================
+   TOGGLE — PATCH IN-PLACE (instant, zero delay)
+   ========================================================= */
+function toggleCard(i) {
+  checked[currentMode][i] = !checked[currentMode][i];
+  const done = checked[currentMode][i];
+
+  const card = document.getElementById('card-'+i);
+  if (!card) return;
+  // Direct DOM manipulation — no re-render, no re-animation
+  done ? card.classList.add('done') : card.classList.remove('done');
+  card.querySelector('.check-circle').textContent = done ? '✓' : '';
+
+  saveState();
+  updateProgress();
+}
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+function updateProgress() {
+  const total = dzikirData[currentMode].length;
+  const done  = Object.values(checked[currentMode]).filter(Boolean).length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+  document.getElementById('progressText').textContent = `${done} dari ${total} selesai`;
+  document.getElementById('progressPct').textContent  = pct+'%';
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('completeBanner').classList.toggle('show', done===total && total>0);
+}
+
+function resetAll() {
+  checked[currentMode] = {};
+  saveState();
+  renderAll();
+  document.getElementById('dzikirPage').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* =========================================================
+   CLOUDS
+   ========================================================= */
+function createClouds() {
+  const c = document.getElementById('clouds');
+  c.innerHTML = '';
+  const colors = ['#ff5500','#ff8020','#cc3000','#ff6600','#dd5500'];
+  for (let i=0; i<6; i++) {
+    const el = document.createElement('div');
+    el.className = 'cloud';
+    const w = 280+Math.random()*420;
+    el.style.cssText = `width:${w}px;height:${w*(.35+Math.random()*.3)}px;left:${Math.random()*110-10}%;top:${Math.random()*85}%;background:${colors[i%colors.length]};animation-duration:${(6+Math.random()*8).toFixed(1)}s;animation-delay:${(Math.random()*4).toFixed(1)}s;`;
+    c.appendChild(el);
+  }
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+loadState();
+createClouds();
+const auto = (()=>{ const h=new Date().getHours(); return (h>=4&&h<18)?'pagi':'petang'; })();
+selectMode(auto);
+</script>
+</body>
+</html>
